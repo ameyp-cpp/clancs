@@ -1,0 +1,6 @@
+[submodule "pyclang"]
+	path = pyclang
+	url = git@github.com:ameyp/py-clang-util.git
+[submodule "emacs-epc"]
+	path = emacs-epc
+	url = https://github.com/kiwanami/emacs-epc.git
