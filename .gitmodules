@@ -4,6 +4,3 @@
 [submodule "emacs-epc"]
 	path = emacs-epc
 	url = https://github.com/kiwanami/emacs-epc.git
-[submodule "emacs-async"]
-	path = emacs-async
-	url = https://github.com/jwiegley/emacs-async.git

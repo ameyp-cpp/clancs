@@ -1,30 +1,10 @@
-(require 'deferred (file-truename "emacs-deferred/deferred.el"))
-(require 'concurrent (file-truename "emacs-deferred/concurrent.el"))
-(require 'async "emacs-async/async.el")
-
-(async-start
-   ;; What to do in the child process
-   (lambda ()
-     (message "This is a test")
-     (sleep-for 3)
-     222)
-
-   ;; What to do when it finishes
-   (lambda (result)
-     (message "Async process done, result should be 222: %s" result)))
+(require 'epc "emacs-epc/epc.el")
 
 (defun pyclang-init ()
-  (deferred:$
-    (deferred:next
-      (lambda ()
-	(pymacs-exec "from pyclang import sublimeclang")))
-    (deferred:nextc it
-      (lambda ()
-	(pymacs-exec "from pyclang import sublime")))
-    (deferred:nextc it
-      (lambda ()
-	(setq pymacs-forget-mutability t)
-	(setq pyclang-scaa (pymacs-eval "sublimeclang.SublimeClangAutoComplete()"))))))
+  (pymacs-exec "from pyclang import sublimeclang")
+  (pymacs-exec "from pyclang import sublime")
+  (setq pymacs-forget-mutability t)
+  (setq pyclang-scaa (pymacs-eval "sublimeclang.SublimeClangAutoComplete()")))
 
 (defun pyclang-receive-completions (completions)
   (insert (prin1-to-string completions)))
