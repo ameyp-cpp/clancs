@@ -26,9 +26,18 @@
 	 (position (let* ((cursor-position (what-cursor-position)))
 		     (string-match "point=\\([0-9]+\\)" cursor-position)
 		     (string-to-number (match-string 1 cursor-position))))
-	 (flags (list "-I/home/aparulekar/Developer/GamePlay/gameplay/src" "-I/home/aparulekar/Developer/GamePlay/external-deps/bullet/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/oggvorbis/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/libpng/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/zlib/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/lua/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/glew/include"))
+	 (flags (cdr (assoc 'pyclang-flags dir-local-variables-alist)))
 	 (view (funcall view-constructor (show-file-name) (- position 1) flags))
 	 (query-completions (pymacs-call "getattr" pyclang-scaa "on_query_completions")))
     (funcall query-completions view "" (list (- position 1)))))
+
+(setq my-epc (epc:start-epc "python" '("clancs.py")))
+(deferred:$
+  (epc:call-deferred my-epc 'query_completions '("/home/aparulekar/Developer/GamePlay/gameplay-samples/sample00-mesh/src/MeshGame.cpp"
+						 1060,
+						 "",
+						 ("-I/home/aparulekar/Developer/GamePlay/gameplay/src" "-I/home/aparulekar/Developer/GamePlay/external-deps/bullet/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/oggvorbis/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/libpng/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/zlib/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/lua/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/glew/include")))
+  (deferred:nextc it
+    (lambda (x) (message "Found completions"))))
 
 (provide 'clancs-mode)
