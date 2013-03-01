@@ -1,6 +1,18 @@
+(require 'deferred "emacs-deferred/deferred.el")
+(require 'concurrent "emacs-deferred/concurrent.el")
+(require 'ctable "emacs-ctable/ctable.el")
 (require 'epc "emacs-epc/epc.el")
 
 (defun pyclang-init ()
+  (autoload 'pymacs-apply "pymacs")
+  (autoload 'pymacs-call "pymacs")
+  (autoload 'pymacs-eval "pymacs" nil t)
+  (autoload 'pymacs-exec "pymacs" nil t)
+  (autoload 'pymacs-load "pymacs" nil t)
+  (autoload 'pymacs-autoload "pymacs")
+  (eval-after-load "pymacs"
+    '(add-to-list 'pymacs-load-path (file-truename ".")))
+
   (pymacs-exec "from pyclang import sublimeclang")
   (pymacs-exec "from pyclang import sublime")
   (setq pymacs-forget-mutability t)
