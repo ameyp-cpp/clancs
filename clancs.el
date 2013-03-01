@@ -39,35 +39,4 @@
 	 (query-completions (pymacs-call "getattr" pyclang-scaa "on_query_completions")))
     (funcall query-completions view "" (list (- position 1)))))
 
-(defun pyclang-query-completions ()
-  (setq args-list (cons (let* ((cursor-position (what-cursor-position)))
-			  (string-match "point=\\([0-9]+\\)" cursor-position)
-			  (string-to-number (match-string 1 cursor-position))) nil))
-
-  (deferred:$
-    (deferred:next
-      (lambda ()
-	(list "-I/home/aparulekar/Developer/GamePlay/gameplay/src" "-I/home/aparulekar/Developer/GamePlay/external-deps/bullet/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/oggvorbis/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/libpng/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/zlib/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/lua/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/glew/include")))
-    (deferred:nextc it
-      (lambda (flags)
-	(setq args-list (cons flags args-list))
-	(pymacs-eval "sublime.View")))
-    (deferred:nextc it
-      (lambda (view-constructor)
-	(funcall view-constructor
-		 (show-file-name)
-		 (- (car (cdr args-list)) 1) ; position
-		 (car args-list)))) ; flags
-    (deferred:nextc it
-      (lambda (view)
-	(setq args-list (cons view (cons (car (cdr args-list)) nil)))
-	(pymacs-call "getattr" pyclang-scaa "on_query_completions")))
-    (deferred:nextc it
-      (lambda (query-completions)
-	(funcall query-completions
-		 (car args-list) ; view
-		 ""
-		 (list (- (car (cdr args-list)) 1)) ; position
-		 )))))
-
 (provide 'clancs-mode)
