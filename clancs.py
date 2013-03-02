@@ -5,13 +5,10 @@ server = EPCServer(('localhost', 0))
 scaa = sublimeclang.SublimeClangAutoComplete()
 
 @server.register_function
-def echo(*a):
-    return a
-
-@server.register_function
 def query_completions(filename, position, prefix, flags):
-    view = sublime.View(filename, position, flags[1])
-    return scaa.on_query_completions(view, prefix[1], [position])
+    print filename, position, prefix
+    view = sublime.View(filename, position, flags)
+    return scaa.on_query_completions(view, prefix, [position])
 
 server.print_port()
 server.serve_forever()

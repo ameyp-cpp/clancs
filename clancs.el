@@ -1,43 +1,36 @@
-(require 'deferred "emacs-deferred/deferred.el")
-(require 'concurrent "emacs-deferred/concurrent.el")
-(require 'ctable "emacs-ctable/ctable.el")
-(require 'epc "emacs-epc/epc.el")
+(require 'deferred (file-truename "emacs-deferred/deferred.el"))
+(require 'concurrent (file-truename "emacs-deferred/concurrent.el"))
+(require 'ctable (file-truename "emacs-ctable/ctable.el"))
+(require 'epc (file-truename "emacs-epc/epc.el"))
 
 (defun pyclang-init ()
-  (autoload 'pymacs-apply "pymacs")
-  (autoload 'pymacs-call "pymacs")
-  (autoload 'pymacs-eval "pymacs" nil t)
-  (autoload 'pymacs-exec "pymacs" nil t)
-  (autoload 'pymacs-load "pymacs" nil t)
-  (autoload 'pymacs-autoload "pymacs")
-  (eval-after-load "pymacs"
-    '(add-to-list 'pymacs-load-path (file-truename ".")))
-
-  (pymacs-exec "from pyclang import sublimeclang")
-  (pymacs-exec "from pyclang import sublime")
-  (setq pymacs-forget-mutability t)
-  (setq pyclang-scaa (pymacs-eval "sublimeclang.SublimeClangAutoComplete()")))
+  (setq pyclang-epc (epc:start-epc "python" '("clancs.py")))
+  (message "Pyclang initialized."))
 
 (defun pyclang-receive-completions (completions)
   (insert (prin1-to-string completions)))
 
-(defun pyclang-query-completions ()
-  (let* ((view-constructor (pymacs-eval "sublime.View"))
-	 (position (let* ((cursor-position (what-cursor-position)))
-		     (string-match "point=\\([0-9]+\\)" cursor-position)
-		     (string-to-number (match-string 1 cursor-position))))
-	 (flags (cdr (assoc 'pyclang-flags dir-local-variables-alist)))
-	 (view (funcall view-constructor (show-file-name) (- position 1) flags))
-	 (query-completions (pymacs-call "getattr" pyclang-scaa "on_query_completions")))
-    (funcall query-completions view "" (list (- position 1)))))
+(defun get-include-path (include-path)
+  (unless (file-exists-p include-path)
+    (setq-local project-folder (car (car dir-locals-class-alist)))
+    (if (sequencep project-folder)
+	(setq-local project-folder (concat project-folder)))
+    (concat "-I" (symbol-name project-folder) include-path)))
 
-(setq my-epc (epc:start-epc "python" '("clancs.py")))
-(deferred:$
-  (epc:call-deferred my-epc 'query_completions '("/home/aparulekar/Developer/GamePlay/gameplay-samples/sample00-mesh/src/MeshGame.cpp"
-						 1060,
-						 "",
-						 ("-I/home/aparulekar/Developer/GamePlay/gameplay/src" "-I/home/aparulekar/Developer/GamePlay/external-deps/bullet/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/oggvorbis/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/libpng/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/zlib/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/lua/include" "-I/home/aparulekar/Developer/GamePlay/external-deps/glew/include")))
-  (deferred:nextc it
-    (lambda (x) (message "Found completions"))))
+(defun pyclang-query-completions ()
+  (deferred:$
+    (setq-local file-name (show-file-name))
+    (setq-local project-folder (car (car dir-locals-class-alist)))
+    (setq-local position (let* ((cursor-position (what-cursor-position)))
+				     (string-match "point=\\([0-9]+\\)" cursor-position)
+				     (string-to-number (match-string 1 cursor-position))))
+    (setq-local compile-flags (mapcar 'get-include-path
+				   (mapcar (lambda (include-path) (substring include-path 2))
+					   (cdr (assoc 'pyclang-compile-flags
+						       (cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
+
+    (epc:call-deferred pyclang-epc 'query_completions (list file-name (- position 1) "" compile-flags))
+    (deferred:nextc it
+      (lambda (x) (message (concat "Found " (number-to-string (length x)) " completions"))))))
 
 (provide 'clancs-mode)
