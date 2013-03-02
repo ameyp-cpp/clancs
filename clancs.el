@@ -1,10 +1,13 @@
-(require 'deferred (file-truename "emacs-deferred/deferred.el"))
-(require 'concurrent (file-truename "emacs-deferred/concurrent.el"))
-(require 'ctable (file-truename "emacs-ctable/ctable.el"))
-(require 'epc (file-truename "emacs-epc/epc.el"))
+(require 'deferred (pyclang-get-filepath "emacs-deferred/deferred.el"))
+(require 'concurrent (pyclang-get-filepath "emacs-deferred/concurrent.el"))
+(require 'ctable (pyclang-get-filepath "emacs-ctable/ctable.el"))
+(require 'epc (pyclang-get-filepath "emacs-epc/epc.el"))
+
+(defun pyclang-get-filepath (file-path)
+  (concat (file-name-directory (or load-file-name buffer-file-name)) file-path))
 
 (defun pyclang-init ()
-  (setq pyclang-epc (epc:start-epc "python" '("clancs.py")))
+  (setq pyclang-epc (epc:start-epc "python" (list (pyclang-get-filepath "clancs.py"))))
   (message "Pyclang initialized."))
 
 (defun pyclang-receive-completions (completions)
@@ -31,4 +34,4 @@
     (deferred:nextc it
       (lambda (x) (message (concat "Found " (number-to-string (length x)) " completions"))))))
 
-(provide 'clancs-mode)
+(provide 'clancs)
