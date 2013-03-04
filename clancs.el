@@ -36,7 +36,8 @@
     (deferred:nextc it
       (lambda (x)
 	(message (concat "Found " (number-to-string (length x)) " completions"))
-	(clang-receive-completions x)))))
+	(if x
+	    (clancs-receive-completions x))))))
 
 (defun ac-clancs-candidates ()
   clancs-candidates)
