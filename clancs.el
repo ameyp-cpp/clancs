@@ -9,10 +9,10 @@
   (setq clancs-epc (epc:start-epc "python" (list (concat clancs-path "clancs.py"))))
   (message "Clancs initialized."))
 
+;; Sample input:  (("addRef()	void" "addRef()") ("draw()	void" "draw()") ("getMaterial()	gameplay::Material *" "getMaterial()") ("getMesh() const	gameplay::Mesh *" "getMesh()") ("getMeshPartCount() const	unsigned int" "getMeshPartCount()") ("getNode() const	gameplay::Node *" "getNode()") ("getRefCount() const	unsigned int" "getRefCount()") ("getSkin() const	gameplay::MeshSkin *" "getSkin()") ("hasMaterial(unsigned int partIndex) const	bool" "hasMaterial(${1:unsigned int partIndex})") ("release()	void" "release()") ("setMaterial(const char *materialPath)	gameplay::Material *" "setMaterial(${1:const char *materialPath})") ("setMaterial(const char *vshPath, const char *fshPath)	gameplay::Material *" "setMaterial(${1:const char *vshPath}, ${2:const char *fshPath})") ("setMaterial(gameplay::Material *material)	void" "setMaterial(${1:gameplay::Material *material})") ("setNode(gameplay::Node *node)	void" "setNode(${1:gameplay::Node *node})"))
 (defun clancs-receive-completions (completions)
-  (insert (prin1-to-string completions)))
+  )
 
-;; A sample output:  (("addRef()	void" "addRef()") ("draw()	void" "draw()") ("getMaterial()	gameplay::Material *" "getMaterial()") ("getMesh() const	gameplay::Mesh *" "getMesh()") ("getMeshPartCount() const	unsigned int" "getMeshPartCount()") ("getNode() const	gameplay::Node *" "getNode()") ("getRefCount() const	unsigned int" "getRefCount()") ("getSkin() const	gameplay::MeshSkin *" "getSkin()") ("hasMaterial(unsigned int partIndex) const	bool" "hasMaterial(${1:unsigned int partIndex})") ("release()	void" "release()") ("setMaterial(const char *materialPath)	gameplay::Material *" "setMaterial(${1:const char *materialPath})") ("setMaterial(const char *vshPath, const char *fshPath)	gameplay::Material *" "setMaterial(${1:const char *vshPath}, ${2:const char *fshPath})") ("setMaterial(gameplay::Material *material)	void" "setMaterial(${1:gameplay::Material *material})") ("setNode(gameplay::Node *node)	void" "setNode(${1:gameplay::Node *node})"))
 (defun clancs-query-completions ()
   (deferred:$
     (setq-local file-name (show-file-name))
@@ -35,7 +35,8 @@
     (epc:call-deferred clancs-epc 'query_completions (list file-name (- position 1) "" compile-flags))
     (deferred:nextc it
       (lambda (x)
-	(message (prin1-to-string x))))))
+	(message (concat "Found " (number-to-string (length x)) " completions"))
+	(clang-receive-completions x)))))
 
 (defun ac-clancs-candidates ()
   clancs-candidates)
@@ -43,7 +44,6 @@
 (ac-define-source ac-clancs
   '((candidates . ac-clancs-candidates)
     (prefix . ac-clancs-prefix)
-    (requires . 0)
-    (cache)))
+    (requires . 0)))
 
 (provide 'clancs)
