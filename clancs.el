@@ -51,7 +51,10 @@
 			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
     (deferred:$
       (epc:call-deferred clancs-epc 'query_completions
-			 (list file-name (- position 1) "" clancs-compile-flags))
+			 (if (buffer-modified-p buffer)
+			     (list file-name (- position 1) "" clancs-compile-flags
+				   (buffer-substring-no-properties (point-min) (point-max)))
+			   (list file-name (- position 1) "" clancs-compile-flags)))
       (deferred:nextc it
 	(lambda (x)
 	  (message (concat "Found " (number-to-string (length x)) " completions"))
