@@ -35,19 +35,23 @@
 		     (string-to-number (match-string 1 cursor-position)))))
   (when (/= position clancs-previous-point)
     (setq clancs-candidates nil)
-    (setq compile-flags (mapcar (lambda (include-path)
-				  (if (file-exists-p include-path)
-				      (concat "-I" include-path)
-				    (progn
-				      (setq-local project-folder (car (car dir-locals-class-alist)))
-				      (if (sequencep project-folder)
-					  (setq-local project-folder (concat project-folder)))
-				      (concat "-I" (symbol-name project-folder) include-path))))
-				(mapcar (lambda (include-path) (substring include-path 2))
-					(cdr (assoc 'clancs-compile-flags
-						    (cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
+    (setq clancs-compile-flags
+	  (mapcar
+	   (lambda (include-path)
+	     (if (file-exists-p include-path)
+		 (concat "-I" include-path)
+	       (progn
+		 (setq-local project-folder (car (car dir-locals-class-alist)))
+		 (if (sequencep project-folder)
+		     (setq-local project-folder (concat project-folder)))
+		 (concat "-I" (symbol-name project-folder) include-path))))
+	   (mapcar
+	    (lambda (include-path) (substring include-path 2))
+	    (cdr (assoc 'clancs-clancs-compile-flags
+			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
     (deferred:$
-      (epc:call-deferred clancs-epc 'query_completions (list file-name (- position 1) "" compile-flags))
+      (epc:call-deferred clancs-epc 'query_completions
+			 (list file-name (- position 1) "" clancs-compile-flags))
       (deferred:nextc it
 	(lambda (x)
 	  (message (concat "Found " (number-to-string (length x)) " completions"))
