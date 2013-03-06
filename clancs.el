@@ -1,5 +1,4 @@
 (defvar clancs-path (file-name-directory load-file-name))
-(setq-local clancs-candidates ())
 
 (defun clancs-init ()
   (require 'deferred (concat clancs-path "emacs-deferred/deferred.el"))
@@ -27,14 +26,15 @@
   (ac-start)
   (ac-update))
 
-(defun clancs-query-completions (prefix &optional position &optional buffer)
-  (deferred:$
-    (setq file-name (buffer-file-name buffer))
-    (setq project-folder (car (car dir-locals-class-alist)))
-    (unless position
-      (setq position (let* ((cursor-position (what-cursor-position)))
-		       (string-match "point=\\([0-9]+\\)" cursor-position)
-		       (string-to-number (match-string 1 cursor-position)))))
+(defun clancs-query-completions (prefix &optional position buffer)
+  (setq file-name (buffer-file-name buffer))
+  (setq project-folder (car (car dir-locals-class-alist)))
+  (unless position
+    (setq position (let* ((cursor-position (what-cursor-position)))
+		     (string-match "point=\\([0-9]+\\)" cursor-position)
+		     (string-to-number (match-string 1 cursor-position)))))
+  (when (/= position clancs-previous-point)
+    (setq clancs-candidates nil)
     (setq compile-flags (mapcar (lambda (include-path)
 				  (if (file-exists-p include-path)
 				      (concat "-I" include-path)
@@ -46,21 +46,23 @@
 				(mapcar (lambda (include-path) (substring include-path 2))
 					(cdr (assoc 'clancs-compile-flags
 						    (cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
-
-    (epc:call-deferred clancs-epc 'query_completions (list file-name (- position 1) "" compile-flags))
-    (deferred:nextc it
-      (lambda (x)
-	(message (concat "Found " (number-to-string (length x)) " completions"))
-	(if x
-	    (clancs-receive-completions x))))))
+    (deferred:$
+      (epc:call-deferred clancs-epc 'query_completions (list file-name (- position 1) "" compile-flags))
+      (deferred:nextc it
+	(lambda (x)
+	  (message (concat "Found " (number-to-string (length x)) " completions"))
+	  (if x
+	      (clancs-receive-completions x)))))
+    (setq clancs-previous-point position)))
 
 (defun ac-clancs-candidates ()
-  (message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
   ;(clancs-query-completions ac-prefix ac-point ac-buffer)
   ;; Passing prefix as empty string because ac-point seems to always point to the point (haha)
   ;; where completion was triggered in the first place.
-  (unless clancs-candidates
-    (clancs-query-completions ac-prefix ac-point ac-buffer))
+  ;(message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
+  (when (not (boundp 'clancs-previous-point))
+    (setq clancs-previous-point -1))
+  (clancs-query-completions ac-prefix ac-point ac-buffer)
   clancs-candidates)
 
 (defun ac-clancs-prefix ()
