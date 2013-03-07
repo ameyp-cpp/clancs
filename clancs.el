@@ -43,31 +43,31 @@
 			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
 
 (defun clancs-receive-completions (completions)
-  (setq clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
+  (setq-local clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
   (ac-start)
   (ac-update))
 
 (defun clancs-query-completions (prefix &optional position buffer)
-  (setq file-name (buffer-file-name buffer))
-  (unless position
-    (setq position (let* ((cursor-position (what-cursor-position)))
-		     (string-match "point=\\([0-9]+\\)" cursor-position)
-		     (string-to-number (match-string 1 cursor-position)))))
-  (when (/= position clancs-previous-point)
-    (setq clancs-candidates nil)
-    (setq clancs-compile-flags (clancs-get-compile-flags))
-    (deferred:$
-      (epc:call-deferred clancs-epc 'query_completions
-			 (if (buffer-modified-p buffer)
-			     (list file-name (- position 1) "" clancs-compile-flags
-				   (clancs-make-file-local-copy (current-buffer)))
-			   (list file-name (- position 1) "" clancs-compile-flags)))
-      (deferred:nextc it
-	(lambda (x)
-	  (message (concat "Found " (number-to-string (length x)) " completions"))
-	  (if x
-	      (clancs-receive-completions x)))))
-    (setq clancs-previous-point position)))
+  (let ((file-name (buffer-file-name buffer))
+	(clancs-compile-flags (clancs-get-compile-flags))
+	(position (or position
+		      (let* ((cursor-position (what-cursor-position)))
+			(string-match "point=\\([0-9]+\\)" cursor-position)
+			(string-to-number (match-string 1 cursor-position))))))
+    (when (/= position clancs-previous-point)
+      (setq-local clancs-candidates nil)
+      (deferred:$
+	(epc:call-deferred clancs-epc 'query_completions
+			   (if (buffer-modified-p buffer)
+			       (list file-name (- position 1) "" clancs-compile-flags
+				     (clancs-make-file-local-copy (current-buffer)))
+			     (list file-name (- position 1) "" clancs-compile-flags)))
+	(deferred:nextc it
+	  (lambda (x)
+	    (message (concat "Found " (number-to-string (length x)) " completions"))
+	    (if x
+		(clancs-receive-completions x)))))
+      (setq-local clancs-previous-point position))))
 
 (defun ac-clancs-candidates ()
   ;(clancs-query-completions ac-prefix ac-point ac-buffer)
