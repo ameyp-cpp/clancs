@@ -20,7 +20,14 @@
   (setq result-type (match-string 2 signature))
   (clancs-make-item sym signature result-type))
 
-;; Sample input:  (("addRef()	void" "addRef()") ("draw()	void" "draw()") ("getMaterial()	gameplay::Material *" "getMaterial()") ("getMesh() const	gameplay::Mesh *" "getMesh()") ("getMeshPartCount() const	unsigned int" "getMeshPartCount()") ("getNode() const	gameplay::Node *" "getNode()") ("getRefCount() const	unsigned int" "getRefCount()") ("getSkin() const	gameplay::MeshSkin *" "getSkin()") ("hasMaterial(unsigned int partIndex) const	bool" "hasMaterial(${1:unsigned int partIndex})") ("release()	void" "release()") ("setMaterial(const char *materialPath)	gameplay::Material *" "setMaterial(${1:const char *materialPath})") ("setMaterial(const char *vshPath, const char *fshPath)	gameplay::Material *" "setMaterial(${1:const char *vshPath}, ${2:const char *fshPath})") ("setMaterial(gameplay::Material *material)	void" "setMaterial(${1:gameplay::Material *material})") ("setNode(gameplay::Node *node)	void" "setNode(${1:gameplay::Node *node})"))
+(defun clancs-make-file-local-copy (file-or-buf)
+  (if (bufferp file-or-buf)
+      (with-current-buffer file-or-buf
+        (let ((tempfile (make-temp-file "buffer-content-")))
+          (write-region nil nil tempfile nil 'nomessage)
+          tempfile))
+    (file-local-copy file-or-buf)))
+
 (defun clancs-receive-completions (completions)
   (setq clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
   (ac-start)
@@ -47,13 +54,13 @@
 		 (concat "-I" (symbol-name project-folder) include-path))))
 	   (mapcar
 	    (lambda (include-path) (substring include-path 2))
-	    (cdr (assoc 'clancs-clancs-compile-flags
+	    (cdr (assoc 'clancs-compile-flags
 			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
     (deferred:$
       (epc:call-deferred clancs-epc 'query_completions
 			 (if (buffer-modified-p buffer)
 			     (list file-name (- position 1) "" clancs-compile-flags
-				   (buffer-substring-no-properties (point-min) (point-max)))
+				   (clancs-make-file-local-copy (current-buffer)))
 			   (list file-name (- position 1) "" clancs-compile-flags)))
       (deferred:nextc it
 	(lambda (x)
@@ -66,7 +73,7 @@
   ;(clancs-query-completions ac-prefix ac-point ac-buffer)
   ;; Passing prefix as empty string because ac-point seems to always point to the point (haha)
   ;; where completion was triggered in the first place.
-  ;(message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
+  (message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
   (when (not (boundp 'clancs-previous-point))
     (setq clancs-previous-point -1))
   (clancs-query-completions ac-prefix ac-point ac-buffer)
