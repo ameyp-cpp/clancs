@@ -28,6 +28,9 @@
           tempfile))
     (file-local-copy file-or-buf)))
 
+(defun clancs-get-project-folder ()
+  (symbol-name (car (car dir-locals-class-alist))))
+
 (defun clancs-receive-completions (completions)
   (setq clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
   (ac-start)
@@ -35,7 +38,6 @@
 
 (defun clancs-query-completions (prefix &optional position buffer)
   (setq file-name (buffer-file-name buffer))
-  (setq project-folder (car (car dir-locals-class-alist)))
   (unless position
     (setq position (let* ((cursor-position (what-cursor-position)))
 		     (string-match "point=\\([0-9]+\\)" cursor-position)
@@ -47,11 +49,7 @@
 	   (lambda (include-path)
 	     (if (file-exists-p include-path)
 		 (concat "-I" include-path)
-	       (progn
-		 (setq-local project-folder (car (car dir-locals-class-alist)))
-		 (if (sequencep project-folder)
-		     (setq-local project-folder (concat project-folder)))
-		 (concat "-I" (symbol-name project-folder) include-path))))
+		 (concat "-I" (clancs-get-project-folder) include-path)))
 	   (mapcar
 	    (lambda (include-path) (substring include-path 2))
 	    (cdr (assoc 'clancs-compile-flags
