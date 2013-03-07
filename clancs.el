@@ -31,6 +31,17 @@
 (defun clancs-get-project-folder ()
   (symbol-name (car (car dir-locals-class-alist))))
 
+(defun clancs-get-compile-flags ()
+  (mapcar
+	   (lambda (include-path)
+	     (if (file-exists-p include-path)
+		 (concat "-I" include-path)
+		 (concat "-I" (clancs-get-project-folder) include-path)))
+	   (mapcar
+	    (lambda (include-path) (substring include-path 2))
+	    (cdr (assoc 'clancs-compile-flags
+			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
+
 (defun clancs-receive-completions (completions)
   (setq clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
   (ac-start)
@@ -44,16 +55,7 @@
 		     (string-to-number (match-string 1 cursor-position)))))
   (when (/= position clancs-previous-point)
     (setq clancs-candidates nil)
-    (setq clancs-compile-flags
-	  (mapcar
-	   (lambda (include-path)
-	     (if (file-exists-p include-path)
-		 (concat "-I" include-path)
-		 (concat "-I" (clancs-get-project-folder) include-path)))
-	   (mapcar
-	    (lambda (include-path) (substring include-path 2))
-	    (cdr (assoc 'clancs-compile-flags
-			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
+    (setq clancs-compile-flags (clancs-get-compile-flags))
     (deferred:$
       (epc:call-deferred clancs-epc 'query_completions
 			 (if (buffer-modified-p buffer)
