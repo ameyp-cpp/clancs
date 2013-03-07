@@ -14,11 +14,11 @@
   (popup-make-item sym :view signature :summary return-type))
 
 (defun clancs-make-item-from-completion (completion)
-  (setq signature (car completion))
-  (string-match "\\([A-Za-z_]+\\).*[\t]\\(.*\\)" signature)
-  (setq sym (match-string 1 signature))
-  (setq result-type (match-string 2 signature))
-  (clancs-make-item sym signature result-type))
+  (let ((signature (car completion)))
+    (string-match "\\([A-Za-z_]+\\).*[\t]\\(.*\\)" signature)
+    (clancs-make-item (match-string 1 signature)
+		      signature
+		      (match-string 2 signature))))
 
 (defun clancs-make-file-local-copy (file-or-buf)
   (if (bufferp file-or-buf)
@@ -75,7 +75,7 @@
   ;; where completion was triggered in the first place.
   (message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
   (when (not (boundp 'clancs-previous-point))
-    (setq clancs-previous-point -1))
+    (setq-local clancs-previous-point -1))
   (clancs-query-completions ac-prefix ac-point ac-buffer)
   clancs-candidates)
 
