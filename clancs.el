@@ -1,13 +1,40 @@
 (defvar clancs-path (file-name-directory load-file-name))
+(defvar clancs-buffer "*clancs output*")
+
+(defun clancs-logger (errString)
+  (with-current-buffer (get-buffer-create clancs-buffer)
+    (setq-local buffer-read-only nil)
+    (buffer-disable-undo)
+    (goto-char (point-max))
+    (insert errString)
+    (setq-local buffer-read-only t)))
 
 (defun clancs-init ()
   (require 'deferred (concat clancs-path "emacs-deferred/deferred.el"))
   (require 'concurrent (concat clancs-path "emacs-deferred/concurrent.el"))
   (require 'ctable (concat clancs-path "emacs-ctable/ctable.el"))
   (require 'epc (concat clancs-path "emacs-epc/epc.el"))
+  (require 'epcs (concat clancs-path "emacs-epc/epcs.el"))
   (require 'popup)
-  (setq clancs-epc (epc:start-epc "python" (list (concat clancs-path "clancs.py"))))
+  ;; Initialize the client
+  (defvar clancs-epc-client (epc:start-epc "python" (list (concat clancs-path "clancs.py"))))
+
+  ;; Initialize the server
+  (defvar clancs-epc-server (epcs:server-start
+			       (lambda (manager)
+				 (epc:define-method manager 'log 'clancs-logger "args" "Log to the *clancs* buffer")
+				 )))
+  ;; Communicate emacs server port to python server (and hence the client)
+  (epc:call-sync clancs-epc-client 'init_client
+		 (list (epcs:server-port (cdr (assoc clancs-epc-server epcs:server-processes)))))
+
   (message "Clancs initialized."))
+
+(defun clancs-kill ()
+  (epc:stop-epc clancs-epc-client)
+  (epcs:server-stop clancs-epc-server)
+  (makunbound 'clancs-epc-client)
+  (makunbound 'clancs-epc-server))
 
 ;(clancs-make-item "foo" "foo(int)" "int") ; int foo(int)
 (defun clancs-make-item (sym signature return-type)
@@ -47,7 +74,7 @@
   (ac-start)
   (ac-update))
 
-(defun clancs-query-completions (prefix &optional position buffer)
+(defun clancs-query-completions (&optional position buffer)
   (let ((file-name (buffer-file-name buffer))
 	(clancs-compile-flags (clancs-get-compile-flags))
 	(position (or position
@@ -57,7 +84,7 @@
     (when (/= position clancs-previous-point)
       (setq-local clancs-candidates nil)
       (deferred:$
-	(epc:call-deferred clancs-epc 'query_completions
+	(epc:call-deferred clancs-epc-client 'query_completions
 			   (if (buffer-modified-p buffer)
 			       (list file-name (- position 1) "" clancs-compile-flags
 				     (clancs-make-file-local-copy (current-buffer)))
@@ -69,6 +96,21 @@
 		(clancs-receive-completions x)))))
       (setq-local clancs-previous-point position))))
 
+(defun clancs-recompile-file (&optional position buffer)
+  (let ((file-name (buffer-file-name buffer))
+	(clancs-compile-flags (clancs-get-compile-flags))
+	(position (or position
+		      (let* ((cursor-position (what-cursor-position)))
+			(string-match "point=\\([0-9]+\\)" cursor-position)
+			(string-to-number (match-string 1 cursor-position))))))
+
+    (deferred:$
+      (epc:call-deferred clancs-epc-client 'recompile
+			 (if (buffer-modified-p buffer)
+			     (list file-name (- position 1) "" clancs-compile-flags
+				   (clancs-make-file-local-copy (current-buffer)))
+			   (list file-name (- position 1) "" clancs-compile-flags))))))
+
 (defun ac-clancs-candidates ()
   ;(clancs-query-completions ac-prefix ac-point ac-buffer)
   ;; Passing prefix as empty string because ac-point seems to always point to the point (haha)
@@ -76,7 +118,7 @@
   (message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
   (when (not (boundp 'clancs-previous-point))
     (setq-local clancs-previous-point -1))
-  (clancs-query-completions ac-prefix ac-point ac-buffer)
+  (clancs-query-completions ac-point ac-buffer)
   clancs-candidates)
 
 (defun ac-clancs-prefix ()
@@ -96,4 +138,5 @@
     (prefix . ac-clancs-prefix)
     (requires . 0)))
 
+(clancs-init)
 (provide 'clancs)
