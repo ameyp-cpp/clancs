@@ -1,8 +1,9 @@
 (defvar clancs-path (file-name-directory load-file-name))
-(defvar clancs-buffer "*clancs output*")
+(defvar clancs-buffer " *clancs output*")
 
 (defun clancs-logger (errString)
   (with-current-buffer (get-buffer-create clancs-buffer)
+    (normal-mode)
     (setq-local buffer-read-only nil)
     (buffer-disable-undo)
     (goto-char (point-max))
