@@ -92,7 +92,7 @@
 			     (list file-name (- position 1) "" clancs-compile-flags)))
 	(deferred:nextc it
 	  (lambda (x)
-	    (message (concat "Found " (number-to-string (length x)) " completions"))
+	    ;(message (concat "Found " (number-to-string (length x)) " completions"))
 	    (if x
 		(clancs-receive-completions x)))))
       (setq-local clancs-previous-point position))))
@@ -116,7 +116,7 @@
   ;(clancs-query-completions ac-prefix ac-point ac-buffer)
   ;; Passing prefix as empty string because ac-point seems to always point to the point (haha)
   ;; where completion was triggered in the first place.
-  (message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
+  ;(message (concat "Called. Prefix = " (prin1-to-string ac-prefix) ", Point = " (prin1-to-string ac-point)))
   (when (not (boundp 'clancs-previous-point))
     (setq-local clancs-previous-point -1))
   (clancs-query-completions ac-point ac-buffer)
