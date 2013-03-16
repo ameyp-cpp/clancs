@@ -61,14 +61,19 @@
 
 (defun clancs-get-compile-flags ()
   (mapcar
-	   (lambda (include-path)
-	     (if (file-exists-p include-path)
-		 (concat "-I" include-path)
-		 (concat "-I" (clancs-get-project-folder) include-path)))
-	   (mapcar
-	    (lambda (include-path) (substring include-path 2))
-	    (cdr (assoc 'clancs-compile-flags
-			(cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist)))))))))
+   (lambda (flag)
+     (let ((type (substring flag 0 2))
+	   (content (substring flag 2)))
+       (message type)
+       (message content)
+       (if (string= type "-D")
+	   (concat type content)
+	 (concat type
+		 (if (file-exists-p content)
+		     content
+		   (concat (clancs-get-project-folder) content))))))
+   (cdr (assoc 'clancs-compile-flags
+	       (cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist))))))))
 
 (defun clancs-receive-completions (completions)
   (setq-local clancs-candidates (mapcar 'clancs-make-item-from-completion completions))
