@@ -66,12 +66,15 @@
 	   (content (substring flag 2)))
        (message type)
        (message content)
-       (if (string= type "-D")
-	   (concat type content)
-	 (concat type
-		 (if (file-exists-p content)
-		     content
-		   (concat (clancs-get-project-folder) content))))))
+       (cond ((string= type "-D")
+	      (concat type content))
+	     ((string= type "-I")
+	      (concat type
+		      (if (file-exists-p content)
+			  content
+			(concat (clancs-get-project-folder) content))))
+	     (t
+	      (concat type content)))))
    (cdr (assoc 'clancs-compile-flags
 	       (cdr (assoc 'c++-mode (cdr (car dir-locals-class-alist))))))))
 
