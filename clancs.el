@@ -64,8 +64,6 @@
    (lambda (flag)
      (let ((type (substring flag 0 2))
 	   (content (substring flag 2)))
-       (message type)
-       (message content)
        (cond ((string= type "-D")
 	      (concat type content))
 	     ((string= type "-I")
