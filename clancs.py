@@ -1,5 +1,12 @@
-from pyepc.server import EPCServer
-from pyepc.client import EPCClient
+import os
+import sys
+
+module_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(module_path + "/python-epc")
+sys.path.append(module_path +  "/sexpdata")
+
+from epc.server import EPCServer
+from epc.client import EPCClient
 from pyclang import sublimeclang, sublime
 
 server = EPCServer(('localhost', 0))
