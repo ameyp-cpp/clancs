@@ -100,7 +100,16 @@
 	  (lambda (x)
 	    ;(message (concat "Found " (number-to-string (length x)) " completions"))
 	    (if x
-		(clancs-receive-completions x)))))
+		(clancs-receive-completions x))))
+	(deferred:error it
+	  (lambda (err)
+	    (cond
+	     ((stringp err)
+	      ;; application error
+	      (message (concat "Application error: " err)))
+	     ((eq 'epc-error (car err))
+	      ;; epc error
+	      (message (concat "EPC error: " (cadr err))))))))
       (setq-local clancs-previous-point position))))
 
 (defun clancs-recompile-file (&optional position buffer)
@@ -145,5 +154,4 @@
     (prefix . ac-clancs-prefix)
     (requires . 0)))
 
-(clancs-init)
 (provide 'clancs)
