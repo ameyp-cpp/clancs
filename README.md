@@ -62,16 +62,16 @@ Once you've added the right compilation flags, simply visit a file in the codeba
 1. I'm seeing the following error upon initializing clancs:
     File mode specification error: (error "Server may raise an error. Use \"M-x epc:pop-to-last-server-process-buffer RET\" to see full traceback:
 
-Run `M-x epc:pop-to-last-server-process-buffer`. If the output contains the following line,
+   Run `M-x epc:pop-to-last-server-process-buffer`. If the output contains the following line,
     OSError: libclang.so: cannot open shared object file: No such file or directory
 
-it means that you haven't don't have a supported system installation of clang and also haven't built it yourself as outlined above. Please do that first and try again.
+   it means that you haven't don't have a supported system installation of clang and also haven't built it yourself as outlined above. Please do that first and try again.
 
-If the error says something else, please create a new issue and paste the full traceback there.
+   If the error says something else, please create a new issue and paste the full traceback there.
 
 2. I'm not seeing any completions when I start typing
 
-Clancs typically takes a few seconds to compile a file the first time you visit. If you still don't see any completions after about five-seven seconds, your compilation might have failed. Please check the ` *clancs output*` buffer, any compilation errors will be printed there.
+   Clancs typically takes a few seconds to compile a file the first time you visit. If you still don't see any completions after about five-seven seconds, your compilation might have failed. Please check the ` *clancs output*` buffer, any compilation errors will be printed there.
 
 ## Pending
 
