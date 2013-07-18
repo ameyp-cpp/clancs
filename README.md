@@ -38,7 +38,7 @@ To have clancs start up during emacs startup instead, simply put the body of the
 
 Clang needs to be able to compile your source code completely for it to show appropriate completions. Clancs currently uses [directory-local variables](http://www.gnu.org/software/emacs/manual/html_node/elisp/Directory-Local-Variables.html) to pass compilation flags to clang. As such, you will receive a warning from Emacs about the directory-local variables being unsafe every time you visit a file nested in a directory with a .dir-locals.el file. When you receive this warning, emacs will present you with the option of permanently ignoring these particular variables. I apologize for the inconvenience, but I haven't yet settled on a third-party project-management emacs package for use with clancs.
 
-So, create a .dir-locals.el file in the root directory of the codebase for which you wish clancs to provide automatic completions. This file will contain all the CFLAGS and CXXFLAGS required for compiling any file in that codebase. For example, here are the contents of one of my .dir-locals.el:
+So, create a .dir-locals.el file in the root directory of the codebase for which you wish clancs to provide automatic completions. This file should contain (meaning you have to manually fill it with) all the CFLAGS and CXXFLAGS required for compiling any file in that codebase. For example, here are the contents of one of my .dir-locals.el:
 
     ((c++-mode . ((clancs-compile-flags . ("-Isrc" "-Iinclude/**"
                                            "-DVARIANT_g" "-DQNX" "-Wno-dangling-else"
