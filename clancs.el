@@ -10,6 +10,14 @@
     (insert errString)
     (setq-local buffer-read-only t)))
 
+(defun clancs-visit-file (filename line column)
+  (message (format "Called with %s %d %d" filename line column))
+  (find-file-noselect filename)
+  (switch-to-buffer (find-buffer-visiting filename))
+  (goto-line line)
+  (goto-char (- (+ (point) column) 1))
+)
+
 (defun clancs-init ()
   (require 'deferred (concat clancs-path "emacs-deferred/deferred.el"))
   (require 'concurrent (concat clancs-path "emacs-deferred/concurrent.el"))
@@ -24,6 +32,7 @@
   (defvar clancs-epc-server (epcs:server-start
 			       (lambda (manager)
 				 (epc:define-method manager 'log 'clancs-logger "args" "Log to the *clancs* buffer")
+				 (epc:define-method manager 'visit 'clancs-visit-file "args" "Visit a file")
 				 )))
   ;; Communicate emacs server port to python server (and hence the client)
   (epc:call-sync clancs-epc-client 'init_client
@@ -148,6 +157,21 @@
 		  (and (eq ?: c)
 		       (eq ?: (char-before (1- (point))))))
 	  (point)))))
+
+(defun clancs-goto-definition (&optional position buffer)
+  (let ((file-name (buffer-file-name buffer))
+	(clancs-compile-flags (clancs-get-compile-flags))
+	(position (or position
+		      (let* ((cursor-position (what-cursor-position)))
+			(string-match "point=\\([0-9]+\\)" cursor-position)
+			(string-to-number (match-string 1 cursor-position))))))
+
+    (deferred:$
+      (epc:call-deferred clancs-epc-client 'goto_definition
+			 (if (buffer-modified-p buffer)
+			     (list file-name (- position 1) (eproject-root) "" clancs-compile-flags
+				   (clancs-make-file-local-copy (current-buffer)))
+			   (list file-name (- position 1) (eproject-root) "" clancs-compile-flags))))))
 
 (ac-define-source clancs
   '((candidates . ac-clancs-candidates)
