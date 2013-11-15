@@ -11,10 +11,16 @@ from pyclang import sublimeclang, sublime
 
 server = EPCServer(('localhost', 0))
 scaa = sublimeclang.SublimeClangAutoComplete()
+scg = sublimeclang.SublimeClangGoto()
 client = EPCClient()
 
 def send_compilation_results(content):
     client.call_sync('log', [content])
+
+def send_file_position(position):
+    client.call_sync('log', [position])
+    filename, line, column = position.split(":")
+    client.call_sync('visit', [filename, int(line), int(column)])
 
 @server.register_function
 def init_client(port):
@@ -35,6 +41,11 @@ def warmup_cache(filename, position, prefix, flags, tmp_file=None):
 def recompile(filename, position, prefix, flags, tmp_file=None):
     view = sublime.View(filename, position, flags, tmp_file)
     scaa.recompile(view, lambda: sublimeclang.display_compilation_results(view, send_compilation_results))
+
+@server.register_function
+def goto_definition(filename, position, folders, prefix, flags, tmp_file=None):
+    view = sublime.View(filename, position, flags, tmp_file)
+    scg.goto("definition", view, folders, send_file_position)
 
 server.print_port()
 server.serve_forever()
